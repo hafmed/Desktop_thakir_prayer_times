@@ -11,7 +11,7 @@
 # ./linuxdeployqt-6-x86_64.AppImage thakir_prayer_times -appimage -qmake=/home/hafmed/Qt5.12.8/5.12.8/gcc_64/bin/qmake
 #-------------------------------------------------
 
-QT       += core gui multimedia widgets
+QT     += core gui multimedia widgets
 
 CONFIG += c++11
 VERSION = 1.9.0 #1-9-2020

@@ -1,5 +1,5 @@
 /****************************************************************************
-** HAFIANE 7-9-2009
+** HAFIANE 7-9-2009 / 5-9-2020
 ** ./linuxdeployqt-6-x86_64.AppImage thakir_prayer_times -unsupported-allow-new-glibc -appimage
 ****************************************************************************/
 #include <iostream>
