@@ -1,10 +1,15 @@
 [Desktop Entry]
-Type=Application
-Name=Thakir Prayer Times
-Name[en_US]=thakir_prayer_times
-Comment=Application for calculate prayer times in Algeria
+Name= Thakir Prayer Time
+Name[ar]=Salah Namaz Vakitleri Hesaplayıcısı
+GenericName= Thakir Prayer Time
+GenericName[ar]=Namaz Vakitleri Hesaplayıcısı
 Exec=thakir_prayer_times
 Icon=thakir_prayer_times
-Categories=Science;
 Terminal=false
-X-AppImage-Version=
+Type=Application
+Categories=Qt;Utility;Accessibility;
+Comment=WorldWide Prayer Times Calculator
+Comment[ar]=Dünya Çapında Namaz Vakitleri Hesaplayıcısı
+
+
+

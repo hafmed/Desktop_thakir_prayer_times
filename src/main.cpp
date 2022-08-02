@@ -38,6 +38,8 @@ int main(int argc, char *argv[])
     QPixmap pixmap = QPixmap (":/icons/thakir_prayer_times.ico");
     dialog->setWindowIcon(QIcon(pixmap));
     app.setApplicationName("ذكر لأوقات الصلاة");
+    app.setOrganizationName("hafsoftdz");
+    app.setOrganizationDomain("hafsoftdz.net");
     dialog->show();
     return app.exec();
 

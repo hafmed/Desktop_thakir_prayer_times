@@ -1,10 +1,5 @@
 /************************************************************************
- * $Id$
- *
- * ------------
- * Description:
- * ------------
- *  Copyright (c) 2003-2006, 2009 Arabeyes, Thamer Mahmoud
+ *  Copyright (c) 2003-2006, 2009-2010 Arabeyes, Thamer Mahmoud
  *
  *  A full featured Muslim Prayer Times calculator
  *
@@ -12,14 +7,6 @@
  *  upon a subset of the VSOP87 planetary theory developed by Jean Meeus. Page
  *  and formula numbers in-line below are references to his book: Astronomical
  *  Algorithms. Willmann-Bell, second edition, 1998.
- *
- * -----------------
- * Revision Details:    (Updated by Revision Control System)
- * -----------------
- *  $Date$
- *  $Author$
- *  $Revision$
- *  $Source$
  *
  * (www.arabeyes.org - under LGPL license - see COPYING file)
  ************************************************************************/
@@ -33,12 +20,12 @@ typedef struct
     double sidtime;
     double dra;
     double rsum;
-        
+
 } AstroDay ;
 
 enum Type  { SUNRISE,
              SUNSET };
- 
+
 static void computeAstroDay(double JD, AstroDay* astroday);
 static void computeTopAstro(const Location* loc, const Astro* astro, Astro* tastro);
 static double getRiseSet (const Location* loc, const Astro* astro, int type);
@@ -47,17 +34,16 @@ static double limitAngle180(double L);
 static double limitAngle(double L);
 static double limitAngle1(double L);
 static double limitAngle180between(double L);
-static double getYearFromJulian(double jd);
 
 double getSunrise (const Location* loc, const Astro* tastro)
 {
     return getRiseSet (loc, tastro, SUNRISE);
-} 
+}
 
 double getSunset (const Location* loc, const Astro* tastro)
 {
     return getRiseSet (loc, tastro, SUNSET);
-} 
+}
 
 double getTransit(double lon, const Astro* tastro)
 {
@@ -69,18 +55,18 @@ double getTransit(double lon, const Astro* tastro)
     M = ((tastro->ra[1] - lon - tastro->sid[1]) / 360.0);
     M = limitAngle1(M);
 
-    /* Sidereal time at Greenwich (p. 103) */ 
+    /* Sidereal time at Greenwich (p. 103) */
     sidG =  tastro->sid[1] + 360.985647 * M;
 
     if (tastro->ra[1] > 350 && tastro->ra[2] < 10)
         ra2 += 360;
     if (tastro->ra[0] > 350 && tastro->ra[1] < 10)
         ra0 = 0;
-    
+
     /* Interpolation of 1-day intervals (pp. 24-25) */
-    A = tastro->ra[1] + 
-	(M * ((tastro->ra[1] - ra0) + ( ra2 - tastro->ra[1]) + 
-	      (( ra2 - tastro->ra[1]) - (tastro->ra[1] - ra0)) * M) / 2.0 );
+    A = tastro->ra[1] +
+        (M * ((tastro->ra[1] - ra0) + ( ra2 - tastro->ra[1]) +
+              (( ra2 - tastro->ra[1]) - (tastro->ra[1] - ra0)) * M) / 2.0 );
 
     H =  limitAngle180between(sidG + lon - A);
 
@@ -99,7 +85,7 @@ static double getRiseSet (const Location* loc, const Astro* tastro, int type)
 
     ra0=tastro->ra[0];
     ra2=tastro->ra[2];
-    
+
     /* Compute the hour angle */
     part1 = sin(DEG_TO_RAD(CENTER_OF_SUN_ANGLE)) - (sin (rLat) * sin (rDec));
     part2 = cos (rLat) * cos (rDec);
@@ -109,18 +95,18 @@ static double getRiseSet (const Location* loc, const Astro* tastro, int type)
         return 99;
 
     lhour = limitAngle180 (( RAD_TO_DEG (acos (part3))));
- 
-    /* Eastern Longitudes are positive throughout this file. */ 
+
+    /* Eastern Longitudes are positive throughout this file. */
     M = ((tastro->ra[1] - loc->degreeLong - tastro->sid[1]) / 360.0);
 
     if (type == SUNRISE)
         M = M - (lhour/360.0);
     if (type == SUNSET)
         M = M + (lhour/360.0);
-        
+
     M = limitAngle1(M);
 
-    /* Sidereal time at Greenwich (p. 103) */ 
+    /* Sidereal time at Greenwich (p. 103) */
     sidG = limitAngle(tastro->sid[1] + 360.985647 * M);
 
     ra0 = tastro->ra[0];
@@ -137,9 +123,9 @@ static double getRiseSet (const Location* loc, const Astro* tastro, int type)
                              (( ra2 - tastro->ra[1] ) -
                               ( tastro->ra[1]  -  ra0)) * M) / 2.0 );
 
-    B = tastro->dec[1] + (M * ((tastro->dec[1] - tastro->dec[0]) + 
-                              (tastro->dec[2] - tastro->dec[1]) + 
-                              ((tastro->dec[2] - tastro->dec[1]) -  
+    B = tastro->dec[1] + (M * ((tastro->dec[1] - tastro->dec[0]) +
+                              (tastro->dec[2] - tastro->dec[1]) +
+                              ((tastro->dec[2] - tastro->dec[1]) -
                                (tastro->dec[1] - tastro->dec[0])) * M) / 2.0 );
     rB = DEG_TO_RAD(B);
 
@@ -148,15 +134,15 @@ static double getRiseSet (const Location* loc, const Astro* tastro, int type)
     tH =  DEG_TO_RAD(H) - tastro->dra[1];
 
     /* Airless Sun's altitude at local horizontal coordinates (p. 93, 13.6) */
-    sunAlt = RAD_TO_DEG(asin (  sin(rLat) * sin(rB) 
-                                + cos(rLat) * cos(rB) 
+    sunAlt = RAD_TO_DEG(asin (  sin(rLat) * sin(rB)
+                                + cos(rLat) * cos(rB)
                                 * cos(tH) ));
 
     sunAlt += getRefraction(loc, sunAlt);
 
     /* (p. 103) */
     delM = (sunAlt - CENTER_OF_SUN_ANGLE) / (360.0 * cos(rB) * cos(rLat)
-					     * sin(tH));
+                                             * sin(tH));
 
     return  (M + delM) * 24.0;
 
@@ -173,46 +159,6 @@ double getRefraction(const Location* loc, double sunAlt)
     return (part1 * part2) / 60.0;
 }
 
-/* const double DT[][5]={
-    {121, 112, 103, 95, 88},
-    {82, 77, 72, 68, 63},
-    {60, 56, 53, 51, 48},
-    {46, 44, 42, 40, 38},
-    {35, 33, 31, 29, 26},
-    {24, 22, 20, 18, 16},
-    {14, 12, 11, 10, 9},
-    {8, 7, 7, 7, 7},
-    {7, 7, 8, 8, 9},
-    {9, 9, 9, 9, 10},
-    {10, 10, 10, 10, 10},
-    {10, 10, 11, 11, 11},
-    {11, 11, 12, 12, 12},
-    {12, 13, 13, 13, 14},
-    {14, 14, 14, 15, 15},
-    {15, 15, 15, 16, 16},
-    {16, 16, 16, 16, 16},
-    {16, 15, 15, 14, 13},
-    {13.1, 12.5, 12.2, 12, 12},
-    {12, 12, 12, 12, 11.9},
-    {11.6, 11, 10.2, 9.2, 8.2},
-    {7.1, 6.2, 5.6, 5.4, 5.3},
-    {5.4, 5.6, 5.9, 6.2, 6.5},
-    {6.8, 7.1, 7.3, 7.5, 7.6},
-    {7.7, 7.3, 6.2, 5.2, 2.7},
-    {1.4, -1.2, -2.8, -3.8, -4.8},
-    {-5.5, -5.3, -5.6, -5.7, -5.9},
-    {-6.0, -6.3, -6.5, -6.2, -4.7},
-    {-2.8, -0.1, 2.6, 5.3, 7.7},
-    {10.4, 13.3, 16, 18.2, 20.2},
-    {21.1, 22.4, 23.5, 23.8, 24.3},
-    {24, 23.9, 23.9, 23.7, 24},
-    {24.3, 25.3, 26.2, 27.3, 28.2},
-    {29.1, 30, 30.7, 31.4, 32.2},
-    {33.1, 34, 35, 36.5, 38.3},
-    {40.2, 42.2, 44.5, 46.5, 48.5},
-    {50.5, 52.2, 53.8, 54.9, 55.8},
-    {56.9, 58.3, 60, 61.6, 63}, /* 1990-1998 */
-/* };  */
 
 const double DT2[]={
     63.4673, 63.8285, 64.0908, 64.2998, 64.4734, /* 1999-2003 */
@@ -221,7 +167,7 @@ const double DT2[]={
     66.5, 67.1, 68, 68, 69,                      /* 2010-2014 predictions */
     69, 70, 70                                   /* 2015-2017 predictions */
 };
- 
+
 static double computeDeltaT(double year)
 {
     int i;
@@ -229,31 +175,31 @@ static double computeDeltaT(double year)
     /* pp. 78-80 */
     double t = (year - 2000) / 100.0;
     if (year < 948)
-	return 2177 + (497 * t) + (44.1 * pow (t, 2));
+        return 2177 + (497 * t) + (44.1 * pow (t, 2));
     else if (year >= 1620 && year <= 1998)
-	return 0; /* FIXIT: Support historical delta-t values for years before
-		   * 1998. In the DT table above, each line represents 5 even
-		   * years in the range 1620-1998. We should first complete the
-		   * table to include data for both odd and even years. */
+        return 0; /* FIXIT: Support historical delta-t values for years before
+                   * 1998. In the DT table above, each line represents 5 even
+                   * years in the range 1620-1998. We should first complete the
+                   * table to include data for both odd and even years. */
     else if ((year > 1998 && year < 2100) || year < 1620)
     {
-	/* FIXIT: The "2017" found below this comment should be changed to
-	   reflect the last year added to the DT2 table. */
-	if (year >= 1999 && year <= 2017) {
-	    i = year-1999;
-	    return DT2[i];
-	}
-	/* FIXIT: As of 2007, the two formulas given by Meeus seems to be off by
-	   many seconds when compared to observed values found at
-	   <http://maia.usno.navy.mil>. The DT2 table overrides these values
-	   with observed and predicted ones for delta-t (on January, other
-	   months not yet supported). Extrapolated (and wrong) values are still
-	   used for years after 2017. */
-	else tempdt = 102 + (102 * t) + (25.3 * pow (t, 2));
+        /* NOTE: The "2017" found below this comment should be changed to
+           reflect the last year added to the DT2 table. */
+        if (year >= 1999 && year <= 2017) {
+            i = year-1999;
+            return DT2[i];
+        }
+        /* As of 2007, the two formulas given by Meeus seem to be off by
+           many seconds when compared to observed values found at
+           <http://maia.usno.navy.mil>. The DT2 table overrides these values
+           with observed and predicted ones for delta-t (on January, other
+           months not yet supported). Extrapolated (and wrong) values are still
+           used for years after 2017. */
+        else tempdt = 102 + (102 * t) + (25.3 * pow (t, 2));
 
-	if (year >= 2000)
-	    return tempdt + (0.37 * (year - 2100));
-	else return tempdt;
+        if (year >= 2000)
+            return tempdt + (0.37 * (year - 2100));
+        else return tempdt;
     }
     return 0;
 }
@@ -262,7 +208,7 @@ static double computeDeltaT(double year)
 double getJulianDay(const Date* date, double gmt)
 {
     double jdB=0, jdY, jdM, JD;
-    
+
     jdY=date->year;
     jdM=date->month;
 
@@ -271,7 +217,7 @@ double getJulianDay(const Date* date, double gmt)
         jdM+=12;
     }
 
-    if (date->year < 1) 
+    if (date->year < 1)
         jdY++;
 
     if ((date->year > 1582) || ((date->year == 1582) &&
@@ -421,7 +367,7 @@ const double L3[][3]={
     {3, 5.2, 155.42},
     {1, 4.72, 3.52},
     {1, 5.3, 18849.23},
-    {1, 5.97, 242.73}   
+    {1, 5.97, 242.73}
 };
 
 const double L4[][3]={
@@ -658,10 +604,10 @@ const int COEFF[][5]={
     {2, -1, 0, 2, 2}
 };
 
-void getAstroValuesByDay(double julianDay, const Location* loc, Astro* astro, 
+void getAstroValuesByDay(double julianDay, const Location* loc, Astro* astro,
                          Astro* topAstro)
 {
-    AstroDay ad; 
+    AstroDay ad;
 
     if (astro->jd == julianDay-1)
     {
@@ -727,7 +673,7 @@ void getAstroValuesByDay(double julianDay, const Location* loc, Astro* astro,
         astro->sid[2] = ad.sidtime;
         astro->dra[2] = ad.dra;
         astro->rsum[2] = ad.rsum;
-    
+
     }
 
     astro->jd = julianDay;
@@ -758,15 +704,15 @@ void computeAstroDay(double JD, AstroDay* astroday)
     double PNsum=0, psi=0, epsilon=0;
     double deltaPsi, deltaEps;
 
-    double JC = (JD - 2451545)/36525.0;                                             
-    double JM = JC/10.0; 
+    double JC = (JD - 2451545)/36525.0;
+    double JM = JC/10.0;
     double JM2 = pow (JM, 2);
     double JM3 = pow (JM, 3);
     double JM4 = pow (JM, 4);
     double JM5 = pow (JM, 5);
 
     /* FIXIT: By default, the getJulianDay function returns JDE rather then JD,
-     * make sure this is accurate, and works right in last-day-of-year
+     * make sure this is accurate, and works in last-day-of-year
      * circumstances.  */
     double JDE = JD;
 
@@ -784,11 +730,11 @@ void computeAstroDay(double JD, AstroDay* astroday)
         L4sum += L4[i][0] * cos(L4[i][1] + L4[i][2] * JM);
     L5sum = L5[0][0] * cos(L5[0][1] + L5[0][2] * JM);
 
-    
-    tL = (L0sum + (L1sum * JM) + (L2sum * JM2) 
-          + (L3sum * JM3) + (L4sum * JM4) 
+
+    tL = (L0sum + (L1sum * JM) + (L2sum * JM2)
+          + (L3sum * JM3) + (L4sum * JM4)
           + (L5sum * JM5)) / pow (10, 8);
- 
+
     L = limitAngle(RAD_TO_DEG(tL));
 
     for(i=0; i<5; i++)
@@ -800,7 +746,7 @@ void computeAstroDay(double JD, AstroDay* astroday)
     tB= (B0sum + (B1sum * JM)) / pow (10, 8);
     B = RAD_TO_DEG(tB);
 
-    
+
     for(i=0; i < 40; i++)
         R0sum += R0[i][0] * cos(R0[i][1] + R0[i][2] * JM);
     for(i=0; i < 10; i++)
@@ -809,24 +755,24 @@ void computeAstroDay(double JD, AstroDay* astroday)
         R2sum += R2[i][0] * cos(R2[i][1] + R2[i][2] * JM);
     for(i=0; i < 2; i++)
         R3sum += R3[i][0] * cos(R3[i][1] + R3[i][2] * JM);
-    R4sum = R4[i][0] * cos(R4[i][1] + R4[i][2] * JM);
+    R4sum = R4[0][0] * cos(R4[0][1] + R4[0][2] * JM);
 
     R = (R0sum + (R1sum * JM) + (R2sum * JM2)
          + (R3sum * JM3) + (R4sum * JM4)) / pow (10, 8);
-    
+
     G = limitAngle((L + 180));
     Gg = -B;
     rGg = DEG_TO_RAD(Gg);
     /* Compute the fundamental arguments (p. 144) */
     D = 297.85036 + (445267.111480 * T) -  (0.0019142 * pow (T, 2)) +
         (pow (T, 3)/189474.0);
-    M = 357.52772 + (35999.050340 * T) -  (0.0001603 * pow (T, 2)) -  
+    M = 357.52772 + (35999.050340 * T) -  (0.0001603 * pow (T, 2)) -
         (pow (T, 3)/300000.0);
-    M1 = 134.96298 + (477198.867398 * T) +  (0.0086972 * pow (T, 2)) +  
+    M1 = 134.96298 + (477198.867398 * T) +  (0.0086972 * pow (T, 2)) +
         (pow (T, 3)/56250.0);
-    F = 93.27191 + (483202.017538 * T) -  ( 0.0036825 * pow (T, 2)) +  
+    F = 93.27191 + (483202.017538 * T) -  ( 0.0036825 * pow (T, 2)) +
         (pow (T, 3)/327270.0);
-    O = 125.04452 - (1934.136261 * T) + (0.0020708 * pow (T, 2)) +  
+    O = 125.04452 - (1934.136261 * T) + (0.0020708 * pow (T, 2)) +
         (pow (T, 3)/450000.0);
     /* Add the terms (pp. 144-6) */
     for (i=0; i<63; i++) {
@@ -847,8 +793,8 @@ void computeAstroDay(double JD, AstroDay* astroday)
 
     /* The obliquity of the ecliptic (p. 147, 22.3) */
     U = JM/10.0;
-    E0 = 84381.448 - 4680.93 * U - 1.55 * pow(U,2) + 1999.25 * pow(U,3) 
-        - 51.38 * pow(U,4)  - 249.67 * pow(U,5) - 39.05 * pow(U,6) + 7.12 
+    E0 = 84381.448 - 4680.93 * U - 1.55 * pow(U,2) + 1999.25 * pow(U,3)
+        - 51.38 * pow(U,4)  - 249.67 * pow(U,5) - 39.05 * pow(U,6) + 7.12
         * pow(U,7) + 27.87 * pow(U,8) + 5.79 * pow(U,9) + 2.45 * pow(U,10);
     /* Real/true obliquity (p. 147) */
     E = E0/3600.0 + deltaEps;
@@ -858,7 +804,7 @@ void computeAstroDay(double JD, AstroDay* astroday)
     rLambda = DEG_TO_RAD(lambda);
 
     /* Mean Sidereal time (p. 88) */
-    V0 = 280.46061837 + 360.98564736629 * ( JD - 2451545) +  
+    V0 = 280.46061837 + 360.98564736629 * ( JD - 2451545) +
         0.000387933 * pow(JC,2) - pow(JC,3)/ 38710000.0;
     /* Apparent sidereal time */
     V = limitAngle(V0) + deltaPsi * cos(rE);
@@ -867,7 +813,7 @@ void computeAstroDay(double JD, AstroDay* astroday)
     RAd = cos(rLambda);
     RA = limitAngle(RAD_TO_DEG(atan2(RAn,RAd)));
 
-    DEC = asin( sin(rGg) * cos(rE) + cos(rGg) * sin(rE) * 
+    DEC = asin( sin(rGg) * cos(rE) + cos(rGg) * sin(rE) *
                             sin(rLambda));
 
     astroday->ra = RA;
@@ -893,23 +839,23 @@ void computeTopAstro(const Location* loc, const Astro* astro, Astro* topAstro)
 
         SP = DEG_TO_RAD (8.794/(3600 * astro->rsum[i]));
 
-	/* (p. 82, with b/a = 0.99664719) */
-	tU = atan (0.99664719 * tan(rLat));
+        /* (p. 82, with b/a = 0.99664719) */
+        tU = atan (0.99664719 * tan(rLat));
 
-        tpSin = 0.99664719 * sin(tU) + (loc->seaLevel/EARTH_RADIUS) * 
+        tpSin = 0.99664719 * sin(tU) + (loc->seaLevel/EARTH_RADIUS) *
             sin(rLat);
 
         tpCos = cos(tU) + (loc->seaLevel/EARTH_RADIUS) * cos(rLat);
 
-	/* (p. 297, 40.2) */
-        tRA0 = (((-tpCos) * sin(SP) * sin(rlHour)) / (cos(astro->dec[i]) - 
+        /* (p. 297, 40.2) */
+        tRA0 = (((-tpCos) * sin(SP) * sin(rlHour)) / (cos(astro->dec[i]) -
                                                       tpCos * sin(SP) * cos(rlHour)));
 
         tRA = astro->ra[i] + RAD_TO_DEG(tRA0);
 
-	/* (p. 297, 40.3) */
-        tDEC = RAD_TO_DEG(atan2((sin(astro->dec[i]) - tpSin * sin(SP)) * cos(tRA0), 
-                                cos(astro->dec[i]) - tpCos * sin(SP) * 
+        /* (p. 297, 40.3) */
+        tDEC = RAD_TO_DEG(atan2((sin(astro->dec[i]) - tpSin * sin(SP)) * cos(tRA0),
+                                cos(astro->dec[i]) - tpCos * sin(SP) *
                                 cos(rlHour)));
 
         topAstro->ra[i] = tRA;
@@ -931,7 +877,7 @@ static double limitAngle(double L)
         return 360 * F;
     else if (F < 0)
         return 360 - 360 * F;
-    else return L; 
+    else return L;
 }
 
 
@@ -967,48 +913,5 @@ static double limitAngle180between(double L)
     else if  (F > 180)
         F -= 360;
     return F;
-}
-
-/* FIXIT: Not used and not tested. */
-static double getYearFromJulian(double jd)
-{
-    double tempJD;
-    double F, Z, A, B, a, D, E;
-    int C, month, year;
-
-    tempJD = jd + 0.5;
-
-    /* Add an extra 0.5 to compensate for day starts if different than 0h UT at
-     * local time. */
-    if ((jd - floor(jd)) > 0)
-    {
-	tempJD -= (jd - floor(jd));
-	tempJD += 0.5;
-    }
-
-    Z = (int)tempJD;
-    F = tempJD - floor(tempJD);
-    if (Z < 2299161)
-	A = Z;
-    else
-    {
-	a = (int)((Z-1867216.25)/36524.25);
-	A = Z + 1 + a - (int)(a/4.0);
-    }
-
-    B = A + 1524;
-    C = (int)((B - 122.1)/365.25);
-    D = (int)(365.25 * C);
-    E = (int)((B - D)/30.6001);
-
-    if (E < 14)
-	month = E - 1;
-    else if ( E == 14 || E == 15 )
-	month = E - 13;
-    else month = 0; /* Bad month */
-
-    if (month > 2)
-	return C - 4716;
-    else return C - 4715;
 }
 

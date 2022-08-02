@@ -53,12 +53,12 @@ public:
 
     void setVisible(bool visible);
     QSystemTrayIcon* sticon;
-    QMessageBox msgBox;
 
     bool alerteisdone=false;
     bool AppisVisble=true;
     bool athanwasplayed=false;
-    public slots:
+
+public slots:
     void stopAthan();
 
 private slots:
@@ -80,10 +80,10 @@ private slots:
 
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
 
-    void getAthanType(int index);
+    void getAthanType();
 
 
-    void showQMessageBox(QMediaPlayer::State state);
+    void showQMessageBox(QMediaPlayer::MediaStatus status);
 
 private:
     QAction *actTexte1;
@@ -92,10 +92,12 @@ private:
     QAction *actTexte4;
 
     About dlgAbout;
-
-    QMediaPlayer *athan;
-
+    QString next_prayer_text;
     QTimer *timer;
+    QMessageBox msgBox;
+    QMediaPlayer *athan = nullptr;
+    QAudioOutput *m_audioOutput = nullptr;
+
 };
 
 #endif // THAKIR_PRAYER_TIMES_H

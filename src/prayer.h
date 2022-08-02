@@ -1,21 +1,7 @@
 /************************************************************************
- * $Id$
- *
- * ------------
- * Description:
- * ------------
  *  Copyright (c) 2003-2006, 2009, Arabeyes, Thamer Mahmoud
  *
  *  A full featured Muslim Prayer Times calculator
- *
- *
- * -----------------
- * Revision Details:    (Updated by Revision Control System)
- * -----------------
- *  $Date$
- *  $Author$
- *  $Revision$
- *  $Source$
  *
  * (www.arabeyes.org - under LGPL license - see COPYING file)
  ************************************************************************/
@@ -30,7 +16,7 @@
 extern "C" {
 #endif
 
-   
+
     /* This holds the current date info. */
     typedef struct
     {
@@ -39,7 +25,7 @@ extern "C" {
         int year;
 
     } Date ;
-    
+
 
     /* This holds the location info. */
     typedef struct
@@ -56,13 +42,14 @@ extern "C" {
         double temperature; /* Temperature in Celsius degree (the astronomical
                                standard value is 10) */
     } Location ;
-    
+
 
     /* This structure holds the calculation method used. NOTE: Before explicitly
        setting any of these values, it is more safe to default initialize them
        by calling 'getMethod(0, &method)' */
     typedef struct
     {
+        int method;         /* Chosen calculation method */
         double fajrAng;     /* Fajr angle */
         double ishaaAng;    /* Ishaa angle */
         double imsaakAng;   /* The angle difference between Imsaak and Fajr (
@@ -93,63 +80,67 @@ extern "C" {
                                methods. The default is 48.5 */
         int extreme;        /* Extreme latitude calculation method (see
                                below) */
+        double extremeLat;  /* Latitude at which the extreme method should
+                               always be used. The default is 55 */
         int offset;         /* Enable Offsets switch (set this to 1 to
                                activate). This option allows you to add or
                                subtract any amount of minutes to the daily
                                computed prayer times based on values (in
-                               minutes) for each prayer in the offList array */     
+                               minutes) for each prayer in the offList array */
         double offList[6];  /* For Example: If you want to add 30 seconds to
                                Maghrib and subtract 2 minutes from Ishaa:
-                                    offset = 1
-                                    offList[4] = 0.5
-                                    offList[5] = -2
+                               offset = 1
+                               offList[4] = 0.5
+                               offList[5] = -2
                                ..and than call getPrayerTimes as usual. */
 
     } Method ;
 
 
-    /* 
-       Supported methods for Extreme Latitude calculations (Method.extreme) -
-       (see the file "./doc/method-info.txt" for details) :
-      
-       0:  none. if unable to calculate, leave as 99:99
-       1:  Nearest Latitude: All prayers Always
-       2:  Nearest Latitude: Fajr Ishaa Always
-       3:  Nearest Latitude: Fajr Ishaa if invalid
-       4:  Nearest Good Day: All prayers Always
-       5:  Nearest Good Day: Fajr Ishaa if invalid (default)
-       6:  1/7th of Night: Fajr Ishaa Always
-       7:  1/7th of Night: Fajr Ishaa if invalid
-       8:  1/7th of Day: Fajr Ishaa Always
-       9:  1/7th of Day: Fajr Ishaa if invalid
-       10: Half of the Night: Fajr Ishaa Always
-       11: Half of the Night: Fajr Ishaa if invalid
-       12: Minutes from Shorooq/Maghrib: Fajr Ishaa Always (e.g. Maghrib=Ishaa)
-       13: Minutes from Shorooq/Maghrib: Fajr Ishaa If invalid
-    
+    /*
+      Supported methods for Extreme Latitude calculations (Method.extreme):
+
+      0:  none. if unable to calculate, leave as 99:99
+      1:  Nearest Latitude: All prayers Always
+      2:  Nearest Latitude: Fajr Ishaa Always
+      3:  Nearest Latitude: Fajr Ishaa if invalid
+      4:  Nearest Good Day: All prayers Always
+      5:  Nearest Good Day: Fajr Ishaa if invalid (default)
+      6:  1/7th of Night: Fajr Ishaa Always
+      7:  1/7th of Night: Fajr Ishaa if invalid
+      8:  1/7th of Day: Fajr Ishaa Always
+      9:  1/7th of Day: Fajr Ishaa if invalid
+      10: Half of the Night: Fajr Ishaa Always
+      11: Half of the Night: Fajr Ishaa if invalid
+      12: Minutes from Shorooq/Maghrib: Fajr Ishaa Always (e.g. Maghrib=Ishaa)
+      13: Minutes from Shorooq/Maghrib: Fajr Ishaa If invalid
+      14: Nearest Good Day: Fajr Ishaa if either is invalid
+      15: Angle based: Fajr Ishaa if invalid
     */
 
 
     /* This function is used to auto fill the Method structure with predefined
        data. The supported auto-fill methods for calculations at normal
        circumstances are:
-    
-      0: none. Set to default or 0
-      1: Egyptian General Authority of Survey
-      2: University of Islamic Sciences, Karachi (Shaf'i)
-      3: University of Islamic Sciences, Karachi (Hanafi)
-      4: Islamic Society of North America
-      5: Muslim World League (MWL)
-      6: Umm Al-Qurra, Saudi Arabia
-      7: Fixed Ishaa Interval (always 90)
-      8: Egyptian General Authority of Survey (Egypt)
-      (see the file "./doc/method-info.txt" for more details)
+
+       0: none. Set to default or 0
+       1: Egyptian General Authority of Survey
+       2: University of Islamic Sciences, Karachi (Shaf'i)
+       3: University of Islamic Sciences, Karachi (Hanafi)
+       4: Islamic Society of North America
+       5: Muslim World League (MWL)
+       6: Umm Al-Qurra, Saudi Arabia
+       7: Fixed Ishaa Interval (always 90)
+       8: Egyptian General Authority of Survey (Egypt)
+       9: Umm Al-Qurra Ramadan, Saudi Arabia
+      10: Moonsighting Committee Worldwide
+      11: Morocco Awqaf, Morocco
     */
     void getMethod(int n, Method* conf);
 
 
     /* This structure holds the prayer time output for a single prayer. */
-    typedef struct 
+    typedef struct
     {
         int hour;       /* prayer time hour */
         int minute;     /* prayer time minute */
@@ -158,39 +149,39 @@ extern "C" {
                            function sets this variable to 1 to indicate that
                            this particular prayer time has been calculated
                            through extreme latitude methods and NOT by
-                           conventional means of calculation. */ 
+                           conventional means of calculation. */
     } Prayer ;
 
-    
+
     /* The "getPrayerTimes" function fills an array of six Prayer structures
        "Prayer[6]". This list contains the prayer minutes and hours information
        like this:
-    
-        - Prayer[0].minute    is today's Fajr minutes
-        - Prayer[1].hour      is today's Shorooq hours
-        - ... and so on until...
-        - Prayer[5].minute    is today's Ishaa minutes 
-    */
-    void getPrayerTimes (const Location*, const Method*, const Date*, Prayer*);           
 
-     
+       - Prayer[0].minute    is today's Fajr minutes
+       - Prayer[1].hour      is today's Shorooq hours
+       - ... and so on until...
+       - Prayer[5].minute    is today's Ishaa minutes
+    */
+    void getPrayerTimes (const Location*, const Method*, const Date*, Prayer*);
+
+
     /* Extended prayer times */
     void getImsaak (const Location*, const Method*, const Date*, Prayer*);
     void getNextDayImsaak (const Location*, const Method*, const Date*, Prayer*);
     void getNextDayFajr (const Location*, const Method*, const Date*, Prayer*);
 
- 
+
     /* utilities */
     int getDayofYear (int year, int month, int day);
-    double dms2Decimal (int deg, int min, double sec, char dir); 
+    double dms2Decimal (int deg, int min, double sec, char dir);
     void decimal2Dms (double decimal, int *deg, int *min, double *sec);
 
- 
+
     /* Qibla */
     double getNorthQibla(const Location* location);
-    
 
-  
+
+
 #ifdef  __cplusplus
 }
 #endif

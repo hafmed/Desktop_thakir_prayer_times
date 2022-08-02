@@ -13,13 +13,21 @@
 
 QT     += core gui multimedia widgets
 
-CONFIG += c++11
-VERSION = 1.9.0 #1-9-2020
+CONFIG += c++17
+VERSION = 2.0.1 #1-9-2020  #7-12-2021 #21-5-2022
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++17
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+android:DISTFILES += \
+android-sources/AndroidManifest.xml \
+android-sources/build.gradle
+
+ANDROID_VERSION_CODE = 032201
+
+android:ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android-sources
 
 TARGET = thakir_prayer_times
 TEMPLATE = app

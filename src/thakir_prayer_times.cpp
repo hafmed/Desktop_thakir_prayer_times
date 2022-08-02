@@ -2,13 +2,12 @@
 ** HAFIANE 7-9-2009 / 5-9-2020
 ** ./linuxdeployqt-6-x86_64.AppImage thakir_prayer_times -unsupported-allow-new-glibc -appimage
 ****************************************************************************/
-#include <iostream>
-using namespace std;
-
-#include <stdio.h>
-#include <stdlib.h>
+//#include <stdio.h>
+//#include <stdlib.h>
 #include "prayer.h"
-
+//#include <iostream>
+//#include <string>
+#include <QMessageBox>
 #include <QtGui>
 #include <QString>
 #include <QLabel>
@@ -23,6 +22,16 @@ using namespace std;
 
 #include <QDebug>
 
+#include <QMediaMetaData>
+#include <QMediaDevices>
+#include <QAudioDevice>
+#include <QAudioOutput>
+#include <QMediaFormat>
+#include <QtWidgets>
+
+#include <QUrl>
+#include <iostream>
+using namespace std;
 
 thakir_prayer_times_HAF::thakir_prayer_times_HAF(QWidget *parent)
     : QMainWindow(parent),
@@ -38,20 +47,15 @@ thakir_prayer_times_HAF::thakir_prayer_times_HAF(QWidget *parent)
     timeEdit_imsak_tomorow->setVisible(false);
     timeEdit_fadjra_tomorow->setVisible(false);
 
-    athan = new QMediaPlayer;
-
-    athan->setVolume(97);
-    athan->setMedia(QUrl("qrc:/sound/adhan_Makka.mp3"));
-
     connect(pushButton_about,SIGNAL(clicked()), this, SLOT(about()));
     connect(pushButton_close,SIGNAL(clicked()), this, SLOT(hide()));
 
     //----- HAF 29-0-2020 -----
     connect(pushButton_close,SIGNAL(clicked()), this, SLOT(stopAthan()));
-    connect(athan, SIGNAL(stateChanged(QMediaPlayer::State)), this, SLOT(showQMessageBox(QMediaPlayer::State)));
+    //connect(athan, SIGNAL(stateChanged(QMediaPlayer::State)), this, SLOT(showQMessageBox(QMediaPlayer::State)));
     //-------------------------
 
-    connect(tabWidget_Athan,SIGNAL(currentChanged(int )), this, SLOT(getAthanType(int)));
+    connect(tabWidget_Athan,SIGNAL(currentChanged(int )), this, SLOT(getAthanType()));
 
     dateTimeEdit->setDate(QDate::currentDate());
     dateTimeEdit->setTime(QTime::currentTime());
@@ -195,6 +199,19 @@ thakir_prayer_times_HAF::thakir_prayer_times_HAF(QWidget *parent)
 
     sticon->show(); // On affiche l'icône
     //	sticon->showMessage("Bonjour","Hello, world!"); // On affiche une infobulle
+
+    //-HAF 7-12-2021-----
+    athan = new QMediaPlayer(this);
+    m_audioOutput = new QAudioOutput(this);
+    athan->setAudioOutput(m_audioOutput);
+    m_audioOutput->setVolume(97);
+    athan->setSource(QUrl("qrc:/sound/adhan_Makka.mp3"));
+    connect(athan, &QMediaPlayer::mediaStatusChanged, this, &thakir_prayer_times_HAF::showQMessageBox);
+
+    connect(groupBox_Athan, SIGNAL(toggled(bool )), this, SLOT(getAthanType()));
+
+
+    //-----
 }
 
 
@@ -651,16 +668,49 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
         case 7:getMethod(8, &conf);break;
         }
     }
+    /* auto fill the method structure. Have a look at prayer.h for a
+     * list of supported methods */
+    //	getMethod(5, &conf);
+    conf.round = 3;
+
+    //-- HAF 20-6-2009 --Correction-ajout 1 mn pour tous les prieres--
+    // cf http://www.islamicfinder.org/  noter que pour makka et dans ramadhan +isha 30mn
+    conf.offset = 1; //zero pour desactiver
+    int i;
+
+    for (i = 0; i < 6 ; i++)
+    {
+        if (i!=1)
+        {
+            conf.offList[i]+=1; //+1mn
+            if (radioButton_sitting_Algerie->isChecked())
+            {
+                if (i==4)
+                {
+                   // ptList[i].minute+=4; //ajout pour meghreb de 1+(4mn pour algerie seulement) //correction Bug 21-5-2022 00:00
+                    conf.offList[i]+=4;
+                }
+            }
+            if (ptList[i].minute==60)
+            {
+                ptList[i].minute=0;
+                ptList[i].hour+=1;
+            }
+        }
+    }
+
+    nextFajr.minute+=1; //+1mn
+    if (nextFajr.minute==60)
+    {
+        nextFajr.minute=0;
+        nextFajr.hour+=1;
+    }
 
     //-----------------------------------------
     loc.pressure = 1010;
     loc.temperature= 10;
 
 
-    /* auto fill the method structure. Have a look at prayer.h for a
-     * list of supported methods */
-    //	getMethod(5, &conf);
-    conf.round = 3;
 
     /* Call the main function to fill the Prayer times array of
      * structures */
@@ -672,48 +722,6 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
     getNextDayImsaak (&loc, &conf, &date, &nextImsaak);
     qibla = getNorthQibla(&loc);
 
-    //-- HAF 20-6-2009 --Correction-ajout 1 mn pour tous les prieres--
-    // cf http://www.islamicfinder.org/  noter que pour makka et dans ramadhan +isha 30mn
-    int i;
-
-    for (i = 0; i < 6 ; i++)
-    {
-        if (i!=1)
-        {
-            ptList[i].minute+=1; //+1mn
-            if (radioButton_sitting_Algerie->isChecked())
-            {
-                if (i==4)
-                {
-                    ptList[i].minute+=4; //ajout pour meghreb de 1+(4mn pour algerie seulement)
-                }
-            }
-            if (ptList[i].minute==60)
-            {
-                ptList[i].minute=0;
-                ptList[i].hour+=1;
-            }
-        }
-    }
-    nextFajr.minute+=1; //+1mn
-    if (nextFajr.minute==60)
-    {
-        nextFajr.minute=0;
-        nextFajr.hour+=1;
-    }
-    //       imsaak.minute+=1; //+1mn
-    //       if (imsaak.minute==60)
-    //      {
-    //               imsaak.minute=0;
-    //               imsaak.hour+=1;
-    //      }
-    //      nextImsaak.minute+=1; //+1mn
-    //      if (nextImsaak.minute==60)
-    //       {
-    //                nextImsaak.minute=0;
-    //                nextImsaak.hour+=1;
-    //     }
-    //--------------------------------
 
     //--------------- HAF 5-6-2009 -----------------------
     QString outputtex;
@@ -893,7 +901,7 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
     //qDebug() << "tm_hour:" << tm_hour;
     //qDebug() << "next_minutes 2:" << next_minutes;
 
-    // qDebug() << "cur_minutes:" << cur_minutes;
+    //// qDebug() << "cur_minutes:" << cur_minutes;
     int difference = next_minutes - cur_minutes;
 
     if (next_prayer_id==-1)
@@ -1002,7 +1010,12 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
     msgBox.setWindowFlags(Qt::WindowStaysOnTopHint);
     msgBox.setModal(true);
     msgBox.setLayoutDirection(Qt::LeftToRight);
-    msgBox.setButtonText(QMessageBox::Ok, QString::fromUtf8("إيقاف الأذان"));
+    if (m_radioButton_sansATHAN_isChecked==false)
+    {
+        msgBox.setButtonText(QMessageBox::Ok, QString::fromUtf8("نعم"));
+    }else{
+        msgBox.setButtonText(QMessageBox::Ok, QString::fromUtf8("إيقاف الأذان"));
+    }
     msgBox.setBaseSize(125,31);
     // QPixmap pixmap = QPixmap (":/icons/thakir_prayer_times.ico");
     //msgBox.setIconPixmap(pixmap);
@@ -1013,7 +1026,7 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
     {
         athanwasplayed=true;
         //showNormal();
-        playAthan(next_prayer_text,athan);
+        if (m_radioButton_sansATHAN_isChecked==false) playAthan(next_prayer_text,athan);
         //msgBox.show();
         //msgBox.exec();
         //-- bug :29-8-2009 l'application se ferme si on clik sur "fermer athan" apres que athan est terminé
@@ -1040,11 +1053,11 @@ void thakir_prayer_times_HAF::thakir_prayer_times_Calculer()
         int tempsAlerteAvant=spinBox_Temps_Alerte_Avant->value();
         if (minutes==tempsAlerteAvant && hours==0)
         {
-           // if(minutes+1!=0){
-                sticon->showMessage(QString::fromUtf8("إنتبه من فضلك"),QString::fromUtf8("تبقى لصلاة %1 اقل من %2 دقيقة")
-                                    .arg(next_prayer_text)
-                                    .arg(minutes),QSystemTrayIcon::Warning,10000); // On affiche une infobulle
-           // }
+            // if(minutes+1!=0){
+            sticon->showMessage(QString::fromUtf8("إنتبه من فضلك"),QString::fromUtf8("تبقى لصلاة %1 اقل من %2 دقيقة")
+                                .arg(next_prayer_text)
+                                .arg(minutes),QSystemTrayIcon::Warning,10000); // On affiche une infobulle
+            // }
             alerteisdone=true;
         }
     }
@@ -1124,7 +1137,17 @@ void thakir_prayer_times_HAF::radioButton_sitting_HAF_setNotChecked()
 
 void thakir_prayer_times_HAF::thakir_prayer_times_config()
 {
-    HAF_settings = new QSettings("HAF_MED_Software", "thakir_prayer_times");
+//    QString path ;
+//    QString filename;
+
+//    path = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) ;
+//    filename = "config.ini" ;
+   // QSettings HAF_settings(path + "/"+ filename,QSettings::IniFormat) ;
+   // QSettings HAF_settings("/sdcard/settings.ini", QSettings::NativeFormat); //can be IniFormat, no difference
+
+    HAF_settings= new QSettings("/sdcard/settings.ini", QSettings::IniFormat); //can be IniFormat, no difference
+
+    //HAF_settings = new QSettings(path + "/"+ filename,QSettings::IniFormat);
     m_name_city_DZ=QString::fromUtf8("سعيدة");
     m_latitude_DZ = +34.8304;
     m_longitude_DZ = +0.1518;
@@ -1338,7 +1361,12 @@ void thakir_prayer_times_HAF::readDataFromUI()
 void thakir_prayer_times_HAF::playAthan(QString next_prayer_text,QMediaPlayer* athan)
 {
     timeEdit_pour_attendre_nextsalat->setTime(QTime(0,0,0));
-
+    if (m_radioButton_sansATHAN_isChecked==false)
+    {
+        msgBox.setButtonText(QMessageBox::Ok, QString::fromUtf8("نعم"));
+    }else{
+        msgBox.setButtonText(QMessageBox::Ok, QString::fromUtf8("إيقاف الأذان"));
+    }
     //   athan->setLoops(1);
     athan->play();
 
@@ -1844,45 +1872,96 @@ void thakir_prayer_times_HAF::aboutbis()
     // grabKb();
 }
 
-void thakir_prayer_times_HAF::getAthanType(int index)
+void thakir_prayer_times_HAF::getAthanType()
 {
+   // qDebug() << "tabWidget_Athan->currentIndex()=" << tabWidget_Athan->currentIndex();
+
     if (radioButton_Athan_Makka->isChecked())
     {
-        athan->setMedia(QUrl("qrc:/sound/adhan_Makka.mp3"));
+        athan->setSource(QUrl("qrc:/sound/adhan_Makka.mp3"));
     }
 
     if (radioButton_Athan_Maddina->isChecked())
     {
-        athan->setMedia(QUrl("qrc:/sound/adthan_Maddina.mp3"));
+        athan->setSource(QUrl("qrc:/sound/adhan_Maddina.mp3"));
     }
 
     if (radioButton_Athan_Aquassa->isChecked())
     {
-        athan->setMedia(QUrl("qrc:/sound/adthan_Quodss.wav"));
+        athan->setSource(QUrl("qrc:/sound/adthan_Quodss.wav"));
     }
 
     if (radioButton_Athan_Algeria->isChecked())
     {
-        athan->setMedia(QUrl("qrc:/sound/athan_Algeria.wav"));
+        athan->setSource(QUrl("qrc:/sound/athan_Algeria.wav"));
     }
     alerteisdone=false;
+
 }
 void thakir_prayer_times_HAF::stopAthan()
 {
     athan->stop();
 }
-void thakir_prayer_times_HAF::showQMessageBox(QMediaPlayer::State state)
+void thakir_prayer_times_HAF::showQMessageBox(QMediaPlayer::MediaStatus MediaStatus)
 {
-    if(state==QMediaPlayer::PlayingState){
-        pushButton_close->setText(QString::fromUtf8("ايقاف الاذان"));
-        msgBox.show();
-        athanwasplayed=true;
-        alerteisdone=false;
-    }else{
+    //    if(state==QMediaPlayer::PlayingState){
+    //        pushButton_close->setText(QString::fromUtf8("ايقاف الاذان"));
+    //        msgBox.show();
+    //        athanwasplayed=true;
+    //        alerteisdone=false;
+    //    }else{
+    //        pushButton_close->setText(QString::fromUtf8("إخفاء"));
+    //        msgBox.close();
+    //        athanwasplayed=false;
+    //        alerteisdone=false;
+    //    }
+
+    switch (MediaStatus) {
+    case QMediaPlayer::NoMedia:
         pushButton_close->setText(QString::fromUtf8("إخفاء"));
-        msgBox.close();
+        //  msgBox.close();
         athanwasplayed=false;
         alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::LoadedMedia:
+        // pushButton_close->setText(QString::fromUtf8("ايقاف الاذان"));
+        //   msgBox.exec();
+        athanwasplayed=true;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::LoadingMedia:
+        // msgBox.exec();
+        // pushButton_close->setText(QString::fromUtf8("ايقاف الاذان"));
+        athanwasplayed=true;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::BufferingMedia:
+        athanwasplayed=true;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::BufferedMedia:
+        //  msgBox.exec();
+        athanwasplayed=true;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::StalledMedia:
+        // msgBox.close();
+        //  msgBox.exec();
+        athanwasplayed=false;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+    case QMediaPlayer::EndOfMedia:
+        // msgBox.close();
+        athanwasplayed=false;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+        break;
+    case QMediaPlayer::InvalidMedia:
+        // msgBox.close();
+        athanwasplayed=false;
+        alerteisdone=false;
+       // qDebug() << "m_player->errorString()=" << athan->mediaStatus();
+        break;
     }
 
 }

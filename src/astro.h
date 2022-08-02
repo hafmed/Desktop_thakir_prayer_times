@@ -1,21 +1,7 @@
 /************************************************************************
- * $Id$
- *
- * ------------
- * Description:
- * ------------
  *  Copyright (c) 2003-2006, 2009 Arabeyes, Thamer Mahmoud
  *
  *  A full featured Muslim Prayer Times calculator
- *
- *
- * -----------------
- * Revision Details:    (Updated by Revision Control System)
- * -----------------
- *  $Date$
- *  $Author$
- *  $Revision$
- *  $Source$
  *
  * (www.arabeyes.org - under LGPL license - see COPYING file)
  ************************************************************************/
@@ -38,7 +24,7 @@ extern "C" {
 #define DEG_TO_10_BASE 1/15.0
 
 /* UTILITIES */
-#define DEG_TO_RAD(A) ((A) * (PI/180.0)) 
+#define DEG_TO_RAD(A) ((A) * (PI/180.0))
 #define RAD_TO_DEG(A) ((A) / (PI/180.0))
 
 
@@ -57,10 +43,10 @@ extern "C" {
     /* Fills the structure "astro" with a list of 3-day values, then checks and
      * updates these values if cached. The variable "tastro/topAstro" holds the
      * topocentric values of the same structure. */
-    void getAstroValuesByDay(const double julianDay, const Location* loc, 
-			     Astro* astro, Astro* topAstro);
+    void getAstroValuesByDay(const double julianDay, const Location* loc,
+                             Astro* astro, Astro* topAstro);
     double getTransit(const double lon, const Astro* tastro);
-    double getSunrise(const Location* loc, const Astro* tastro); 
+    double getSunrise(const Location* loc, const Astro* tastro);
     double getSunset(const Location* loc, const Astro* tastro);
 
 #ifdef  __cplusplus
