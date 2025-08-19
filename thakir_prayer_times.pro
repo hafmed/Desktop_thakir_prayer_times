@@ -1,0 +1,59 @@
+#-------------------------------------------------
+# HAF 19-7-2020
+# on Qt 5.9.5 GCC 7.3.0; 64 bit Qt Creator 4.5.2 Ubuntu 18.4
+# sudo apt install g++
+# sudo apt install cmake
+# sudo apt-get install libgl-dev
+# sudo apt-get install qt5-default
+#------------Make *.AppImage----------------------
+# in the directorie : compilation
+# chmod a+x linuxdeployqt-6-x86_64.AppImage
+# ./linuxdeployqt-6-x86_64.AppImage thakir_prayer_times -appimage -qmake=/home/hafmed/Qt5.12.8/5.12.8/gcc_64/bin/qmake
+#------ON MANJARO 9-8-2025-------------------------------------------
+# PATH=/home/hafmed/Qt/6.9.1/gcc_64/bin:$PATH                ✔  2m 26s 
+# export PATH
+# sudo pacman -S icu
+#./linuxdeployqt-continuous-x86_64.AppImage thakir_prayer_times -appimage -unsupported-allow-new-glibc -qmake=/home/hafmed/Qt/6.9.1/gcc_64/bin/qmake -no-translations
+#--------------------------------------------------------------------
+# https://citra-emu.org/wiki/building-for-linux/
+QT     +=multimedia
+QT     += core gui widgets
+
+CONFIG += c++17
+VERSION = 2.0.5 #1-9-2020  #7-12-2021 #21-5-2022 #9-8-2025
+DEFINES += APP_VERSION=\\\"$$VERSION\\\"
+
+QMAKE_CXXFLAGS += -std=c++17
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+android:DISTFILES += \
+android-sources/AndroidManifest.xml \
+android-sources/build.gradle
+
+ANDROID_VERSION_CODE = 032201
+
+android:ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android-sources
+
+TARGET = thakir_prayer_times
+TEMPLATE = app
+
+SOURCES +=  main.cpp \
+        thakir_prayer_times.cpp \
+    astro.c \
+    prayer.c \
+    about.cpp
+
+HEADERS += thakir_prayer_times.h \
+    astro.h \
+    prayer.h \
+    about.h \
+    constants.h
+
+FORMS += thakir_prayer_times.ui\
+    about.ui
+
+RESOURCES += \
+    qtresource.qrc
+
+win32:RC_ICONS += icons\thakir_prayer_times.ico

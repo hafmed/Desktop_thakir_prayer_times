@@ -1,0 +1,12 @@
+    # Example Flatpak manifest for a simple Qt application
+    app-id: org.flatpak.thakir_prayer_times
+    runtime: org.kde.Platform
+    runtime-version: "6.9" # Or the appropriate Qt version
+    sdk: org.kde.Sdk
+    command: thakir
+    modules:
+      - name: thakir
+        buildsystem: qmake # Or cmake, meson, etc. depending on your build system
+        sources:
+          - type: dir
+            path: /home/hafmed/Documents/24-25/Desktop_thakir_prayer_times/src/ # Path to your application source code
